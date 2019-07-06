@@ -35,7 +35,6 @@ def migrateRawFreqData(from_dt, to_dt):
 
     cur.close()
 
-    
     conn = psycopg2.connect(host=warehouseConfigDict['source_db_host'], dbname=warehouseConfigDict['source_db_name'],
                             user=warehouseConfigDict['source_db_username'], password=warehouseConfigDict['source_db_password'])
     cur = conn.cursor()
@@ -48,7 +47,7 @@ def migrateRawFreqData(from_dt, to_dt):
         iteratorEndVal = rowIter+insIncr
         if iteratorEndVal >= len(res):
             iteratorEndVal = len(res)
-        
+
         # Create row tuples
         freqInsertionTuples = []
         for insRowIter in range(rowIter, iteratorEndVal):
@@ -62,11 +61,11 @@ def migrateRawFreqData(from_dt, to_dt):
         dataText = ','.join(cur.mogrify('(%s,%s)', row)
                             for row in freqInsertionTuples)
         cur.execute(
-            'insert into tablename (data_time, freq) values '+dataText)
+            'insert into RawFrequencies (DataTime, Frequency) values '+dataText)
         conn.commit()
 
         rowIter = iteratorEndVal
-    
+
     # close cursor and connection
     cur.close()
     conn.close()
