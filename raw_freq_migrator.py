@@ -2,6 +2,7 @@
 '''
 psycopg2 connection string - http://initd.org/psycopg/docs/module.html
 python efficient bulk insertion - https://nelsonslog.wordpress.com/2015/04/27/inserting-lots-of-data-into-a-remote-postgres-efficiently/
+on update conflict for upsert - https://stackoverflow.com/questions/34514457/bulk-insert-update-if-on-conflict-bulk-upsert-on-postgres
 [(20180222, '09:57:20', 49.921), (20180222, '09:57:30', 49.9292), (20180222, '09:57:40', 49.9311), (20180222, '09:57:50', 49.9327), (20180222, '09:58:00', 49.9296)]
 '''
 import cx_Oracle
@@ -10,10 +11,6 @@ import psycopg2
 
 from uat_data_source_config import getUATDataSourceConnString
 from warehouse_db_config import getWarehouseDbConfigDict
-
-from_dt = dt.datetime(2019, 7, 2, 1, 2, 3)
-to_dt = dt.datetime(2019, 7, 3, 4, 5, 6)
-
 
 def migrateRawFreqData(from_dt, to_dt):
     from_date_key = int(from_dt.strftime('%Y%m%d'))
@@ -58,10 +55,10 @@ def migrateRawFreqData(from_dt, to_dt):
             freqInsertionTuples.append(freqInsertionTuple)
 
         # prepare sql for insertion and execute
-        dataText = ','.join(cur.mogrify('(%s,%s)', row)
-                            for row in freqInsertionTuples)
+        dataText = ','.join(cur.mogrify('(%s,%s)', row).decode("utf-8") for row in freqInsertionTuples)
+        
         cur.execute(
-            'insert into RawFrequencies (DataTime, Frequency) values '+dataText)
+            'insert into public."RawFrequencies" ("DataTime", "Frequency") values '+dataText+' on conflict ("DataTime") do update set "Frequency" = excluded."Frequency"')
         conn.commit()
 
         rowIter = iteratorEndVal
