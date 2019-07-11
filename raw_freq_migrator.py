@@ -12,6 +12,28 @@ import psycopg2
 from uat_data_source_config import getUATDataSourceConnString
 from warehouse_db_config import getWarehouseDbConfigDict
 
+def migrateRawFreqDataWithFetchWindow(from_dt, to_dt, fetch_window_interval):
+    # if fetch window is not defined, to migration for the whole period
+    if not isinstance(fetch_window_interval, dt.timedelta):
+        migrateRawFreqData(from_dt, to_dt)
+        return
+    
+    # iterate using the fetch_window_interval
+    window_start_dt = from_dt
+    window_end_dt = from_dt
+    abort = False
+    while abort == False:
+        # determine the window timestamps
+        window_start_dt = window_end_dt
+        window_end_dt = window_start_dt + fetch_window_interval
+        
+        # make sure the main window limits are not violated
+        if window_end_dt >= to_dt:
+            window_end_dt = to_dt
+            abort = True
+        # do the migration
+        migrateRawFreqData(window_start_dt, window_end_dt)                
+
 def migrateRawFreqData(from_dt, to_dt):
     from_date_key = int(from_dt.strftime('%Y%m%d'))
     #from_time_key = from_dt.strftime('%H:%M:%S')
@@ -66,3 +88,4 @@ def migrateRawFreqData(from_dt, to_dt):
     # close cursor and connection
     cur.close()
     conn.close()
+    print('Migration done for time {0} to {1}'.format(from_dt, to_dt))

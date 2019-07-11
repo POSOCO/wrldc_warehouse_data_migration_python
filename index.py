@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import datetime as dt
-from raw_freq_migrator import migrateRawFreqData
+from raw_freq_migrator import migrateRawFreqDataWithFetchWindow
 
-from_dt = dt.datetime(2019, 7, 1)
-to_dt = dt.datetime(2019, 7, 3)
+# configuration inputs for data migration
+from_dt = dt.datetime(2019, 7, 6)
+to_dt = dt.datetime(2019, 7, 11)
+fetch_window_interval = dt.timedelta(days=1)
 
-migrateRawFreqData(from_dt, to_dt)
+migrateRawFreqDataWithFetchWindow(from_dt, to_dt, fetch_window_interval)
